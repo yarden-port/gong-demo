@@ -110,14 +110,15 @@ jobs:
             "statusLabel": "Error in Step 4",
             "summary": "Error in Step 4: Pipeline halted due to an issue."
           }'
-          # Add log entry
+            # Add log entry
           curl -L "https://api.getport.io/v1/actions/runs/${{ fromJson(inputs.port_payload).runId }}/logs" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "statusLabel": "Error in Step 4",
-            "message": "Error in Step 4: Pipeline halted due to an issue."
+            "statusLabel": "Step 4 Failed",
+            "message": "Step 4 Filed with error code 666"
           }'
+          
 
       - name: Wait 5 Seconds
         run: sleep 5
