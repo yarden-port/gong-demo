@@ -21,6 +21,7 @@ jobs:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           blueprint: service
+          identifier: ${{ fromJson(inputs.port_payload).context.entity }}
           runId: ${{ fromJson(inputs.port_payload).context.runId }}
           logMessage: "Step 1 completed successfully."
 
@@ -29,6 +30,8 @@ jobs:
         with:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          blueprint: service
+          identifier: ${{ fromJson(inputs.port_payload).context.entity }}
           runId: ${{ fromJson(inputs.port_payload).context.runId }}
           logMessage: "Step 2 completed successfully."
 
@@ -37,6 +40,8 @@ jobs:
         with:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          blueprint: service
+          identifier: ${{ fromJson(inputs.port_payload).context.entity }}
           runId: ${{ fromJson(inputs.port_payload).context.runId }}
           logMessage: "Step 3 completed successfully."
 
@@ -50,6 +55,8 @@ jobs:
         with:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          blueprint: service
+          identifier: ${{ fromJson(inputs.port_payload).context.entity }}
           runId: ${{ fromJson(inputs.port_payload).context.runId }}
           logMessage: "Error in Step 4: Pipeline halted due to an issue."
 
@@ -58,5 +65,7 @@ jobs:
         with:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          blueprint: service
+          identifier: ${{ fromJson(inputs.port_payload).context.entity }}
           runId: ${{ fromJson(inputs.port_payload).context.runId }}
           logMessage: "Pipeline completed with errors."
