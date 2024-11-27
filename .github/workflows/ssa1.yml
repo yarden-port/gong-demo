@@ -28,6 +28,7 @@ jobs:
 
       - name: Log Step 1 Progress
         run: |
+          # Update statusLabel and summary
           curl -L -X PATCH "https://api.getport.io/v1/actions/runs/${{ fromJson(inputs.port_payload).runId }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
@@ -35,12 +36,22 @@ jobs:
             "statusLabel": "Step 1 Completed",
             "summary": "Step 1 completed successfully."
           }'
+          # Add log entry
+          curl -L "https://api.getport.io/v1/actions/runs/${{ fromJson(inputs.port_payload).runId }}/logs" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "terminationStatus": "SUCCESS",
+            "statusLabel": "Step 1 Completed",
+            "message": "Step 1 completed successfully."
+          }'
 
       - name: Wait 5 Seconds
         run: sleep 5
 
       - name: Log Step 2 Progress
         run: |
+          # Update statusLabel and summary
           curl -L -X PATCH "https://api.getport.io/v1/actions/runs/${{ fromJson(inputs.port_payload).runId }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
@@ -48,18 +59,37 @@ jobs:
             "statusLabel": "Step 2 Completed",
             "summary": "Step 2 completed successfully."
           }'
+          # Add log entry
+          curl -L "https://api.getport.io/v1/actions/runs/${{ fromJson(inputs.port_payload).runId }}/logs" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "terminationStatus": "SUCCESS",
+            "statusLabel": "Step 2 Completed",
+            "message": "Step 2 completed successfully."
+          }'
 
       - name: Wait 5 Seconds
         run: sleep 5
 
       - name: Log Step 3 Progress
         run: |
+          # Update statusLabel and summary
           curl -L -X PATCH "https://api.getport.io/v1/actions/runs/${{ fromJson(inputs.port_payload).runId }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
             "statusLabel": "Step 3 Completed",
             "summary": "Step 3 completed successfully."
+          }'
+          # Add log entry
+          curl -L "https://api.getport.io/v1/actions/runs/${{ fromJson(inputs.port_payload).runId }}/logs" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "terminationStatus": "SUCCESS",
+            "statusLabel": "Step 3 Completed",
+            "message": "Step 3 completed successfully."
           }'
 
       - name: Wait 5 Seconds
@@ -75,6 +105,7 @@ jobs:
       - name: Log Step 4 Error
         if: failure()
         run: |
+          # Update statusLabel and summary
           curl -L -X PATCH "https://api.getport.io/v1/actions/runs/${{ fromJson(inputs.port_payload).runId }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
@@ -83,12 +114,22 @@ jobs:
             "statusLabel": "Error in Step 4",
             "summary": "Error in Step 4: Pipeline halted due to an issue."
           }'
+          # Add log entry
+          curl -L "https://api.getport.io/v1/actions/runs/${{ fromJson(inputs.port_payload).runId }}/logs" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "terminationStatus": "FAILURE",
+            "statusLabel": "Error in Step 4",
+            "message": "Error in Step 4: Pipeline halted due to an issue."
+          }'
 
       - name: Wait 5 Seconds
         run: sleep 5
 
       - name: Set Final Status as Failure
         run: |
+          # Finalize run status
           curl -L -X PATCH "https://api.getport.io/v1/actions/runs/${{ fromJson(inputs.port_payload).runId }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
@@ -96,4 +137,13 @@ jobs:
             "status": "FAILURE",
             "statusLabel": "Pipeline Failed",
             "summary": "Pipeline completed with errors."
+          }'
+          # Add final log entry
+          curl -L "https://api.getport.io/v1/actions/runs/${{ fromJson(inputs.port_payload).runId }}/logs" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "terminationStatus": "FAILURE",
+            "statusLabel": "Pipeline Failed",
+            "message": "Pipeline completed with errors."
           }'
