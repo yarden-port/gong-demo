@@ -22,7 +22,7 @@ jobs:
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{ fromJson(inputs.port_payload).context.runId }}
+          runId: ${{ fromJson(inputs.port_payload).port_payload.runId }}
           logMessage: "Step 1 completed successfully."
 
       - name: Log Step 2 Progress
@@ -32,7 +32,7 @@ jobs:
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{ fromJson(inputs.port_payload).context.runId }}
+          runId: ${{ fromJson(inputs.port_payload).port_payload.runId }}
           logMessage: "Step 2 completed successfully."
 
       - name: Log Step 3 Progress
@@ -42,7 +42,7 @@ jobs:
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{ fromJson(inputs.port_payload).context.runId }}
+          runId: ${{ fromJson(inputs.port_payload).port_payload.runId }}
           logMessage: "Step 3 completed successfully."
 
       - name: Simulate Error in Step 4
@@ -57,7 +57,7 @@ jobs:
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{ fromJson(inputs.port_payload).context.runId }}
+          runId: ${{ fromJson(inputs.port_payload).port_payload.runId }}
           logMessage: "Error in Step 4: Pipeline halted due to an issue."
 
       - name: Log Final Status
@@ -67,5 +67,5 @@ jobs:
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{ fromJson(inputs.port_payload).context.runId }}
+          runId: ${{ fromJson(inputs.port_payload).port_payload.runId }}
           logMessage: "Pipeline completed with errors."
