@@ -23,7 +23,9 @@ jobs:
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
-          logMessage: "Step 1 completed successfully."
+          logMessage: |
+            [Status: Step 1 Completed]
+            Step 1 completed successfully.
           statusLabel: "Step 1 Completed"
 
       - name: Log Step 2 Progress
@@ -34,7 +36,9 @@ jobs:
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
-          logMessage: "Step 2 completed successfully."
+          logMessage: |
+            [Status: Step 2 Completed]
+            Step 2 completed successfully.
           statusLabel: "Step 2 Completed"
 
       - name: Log Step 3 Progress
@@ -45,7 +49,9 @@ jobs:
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
-          logMessage: "Step 3 completed successfully."
+          logMessage: |
+            [Status: Step 3 Completed]
+            Step 3 completed successfully.
           statusLabel: "Step 3 Completed"
 
       - name: Simulate Error in Step 4
@@ -72,10 +78,10 @@ jobs:
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
           logMessage: |
+            [Status: Error in Step 4]
             Error in Step 4: Pipeline halted due to an issue.
             Error Log: ${{ env.Error_Log }}
             Error Details: ${{ env.Error_Details }}
-            Failure Step: ${{ env.Failure_Step }}
           statusLabel: "Error in Step 4"
 
       - name: Log Final Status
@@ -87,5 +93,6 @@ jobs:
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
           logMessage: |
+            [Status: Pipeline Failed]
             Pipeline completed with errors.
           statusLabel: "Pipeline Failed"
