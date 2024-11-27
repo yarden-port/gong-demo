@@ -15,7 +15,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Log Step 1 Progress
+      - name: Log Step 1 Progress and Update Label
         uses: port-labs/port-github-action@v1
         with:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
@@ -29,7 +29,7 @@ jobs:
       - name: Wait 5 Seconds
         run: sleep 5
 
-      - name: Log Step 2 Progress
+      - name: Log Step 2 Progress and Update Label
         uses: port-labs/port-github-action@v1
         with:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
@@ -43,7 +43,7 @@ jobs:
       - name: Wait 5 Seconds
         run: sleep 5
 
-      - name: Log Step 3 Progress
+      - name: Log Step 3 Progress and Update Label
         uses: port-labs/port-github-action@v1
         with:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
@@ -70,7 +70,7 @@ jobs:
           echo "Error Log: Simulated failure in Step 4." >> $GITHUB_ENV
           echo "Error Details: This is an example error log for debugging purposes." >> $GITHUB_ENV
 
-      - name: Log Step 4 Error and Update Status
+      - name: Log Step 4 Error and Update Label
         if: failure()
         uses: port-labs/port-github-action@v1
         with:
@@ -88,7 +88,7 @@ jobs:
       - name: Wait 5 Seconds
         run: sleep 5
 
-      - name: Log Final Status with Error Details
+      - name: Set Final Status and Log
         if: always()
         uses: port-labs/port-github-action@v1
         with:
@@ -99,4 +99,5 @@ jobs:
           runId: ${{ fromJson(inputs.port_payload).runId }}
           logMessage: |
             Pipeline completed with errors - error: "${{ env.Error_Details }}"
+          terminationStatus: FAILURE
           statusLabel: "Pipeline Failed"
