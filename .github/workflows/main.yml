@@ -1,0 +1,61 @@
+name: Demo 1 - Regular SSA Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      port_payload:
+        required: true
+        description: "Port's payload with context and details about the run."
+        type: string
+
+jobs:
+  pipeline-progress:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Log Step 1 Progress
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          runId: ${{ fromJson(inputs.port_payload).context.runId }}
+          logMessage: "Step 1 completed successfully."
+
+      - name: Log Step 2 Progress
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          runId: ${{ fromJson(inputs.port_payload).context.runId }}
+          logMessage: "Step 2 completed successfully."
+
+      - name: Log Step 3 Progress
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          runId: ${{ fromJson(inputs.port_payload).context.runId }}
+          logMessage: "Step 3 completed successfully."
+
+      - name: Simulate Error in Step 4
+        run: exit 1
+        continue-on-error: true
+
+      - name: Log Step 4 Error
+        if: failure()
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          runId: ${{ fromJson(inputs.port_payload).context.runId }}
+          logMessage: "Error in Step 4: Pipeline halted due to an issue."
+
+      - name: Log Final Status
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          runId: ${{ fromJson(inputs.port_payload).context.runId }}
+          logMessage: "Pipeline completed with errors."
