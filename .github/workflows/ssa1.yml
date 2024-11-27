@@ -41,7 +41,6 @@ jobs:
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "terminationStatus": "SUCCESS",
             "statusLabel": "Step 1 Completed",
             "message": "Step 1 completed successfully."
           }'
@@ -64,7 +63,6 @@ jobs:
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "terminationStatus": "SUCCESS",
             "statusLabel": "Step 2 Completed",
             "message": "Step 2 completed successfully."
           }'
@@ -87,7 +85,6 @@ jobs:
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "terminationStatus": "SUCCESS",
             "statusLabel": "Step 3 Completed",
             "message": "Step 3 completed successfully."
           }'
@@ -119,7 +116,6 @@ jobs:
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "terminationStatus": "FAILURE",
             "statusLabel": "Error in Step 4",
             "message": "Error in Step 4: Pipeline halted due to an issue."
           }'
