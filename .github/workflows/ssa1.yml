@@ -20,6 +20,7 @@ jobs:
         with:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          blueprint: service
           runId: ${{ fromJson(inputs.port_payload).context.runId }}
           logMessage: "Step 1 completed successfully."
 
