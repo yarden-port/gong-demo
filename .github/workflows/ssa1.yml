@@ -24,6 +24,7 @@ jobs:
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
           logMessage: "Step 1 completed successfully."
+          statusLabel: "Step 1 Completed"
 
       - name: Log Step 2 Progress
         uses: port-labs/port-github-action@v1
@@ -34,6 +35,7 @@ jobs:
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
           logMessage: "Step 2 completed successfully."
+          statusLabel: "Step 2 Completed"
 
       - name: Log Step 3 Progress
         uses: port-labs/port-github-action@v1
@@ -44,6 +46,7 @@ jobs:
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
           logMessage: "Step 3 completed successfully."
+          statusLabel: "Step 3 Completed"
 
       - name: Simulate Error in Step 4
         id: simulate-error
@@ -59,7 +62,7 @@ jobs:
           echo "Error Details: Simulating error log data for debugging." >> $GITHUB_ENV
           echo "Failure Step: Step 4" >> $GITHUB_ENV
 
-      - name: Log Step 4 Error with Details
+      - name: Log Step 4 Error and Update Status
         if: failure()
         uses: port-labs/port-github-action@v1
         with:
@@ -73,6 +76,7 @@ jobs:
             Error Log: ${{ env.Error_Log }}
             Error Details: ${{ env.Error_Details }}
             Failure Step: ${{ env.Failure_Step }}
+          statusLabel: "Error in Step 4"
 
       - name: Log Final Status
         uses: port-labs/port-github-action@v1
@@ -84,3 +88,4 @@ jobs:
           runId: ${{ fromJson(inputs.port_payload).runId }}
           logMessage: |
             Pipeline completed with errors.
+          statusLabel: "Pipeline Failed"
