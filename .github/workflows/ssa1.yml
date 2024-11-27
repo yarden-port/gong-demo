@@ -23,10 +23,11 @@ jobs:
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
-          logMessage: |
-            [Status: Step 1 Completed]
-            Step 1 completed successfully.
+          logMessage: "Step 1 completed successfully."
           statusLabel: "Step 1 Completed"
+
+      - name: Wait 5 Seconds
+        run: sleep 5
 
       - name: Log Step 2 Progress
         uses: port-labs/port-github-action@v1
@@ -36,10 +37,11 @@ jobs:
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
-          logMessage: |
-            [Status: Step 2 Completed]
-            Step 2 completed successfully.
+          logMessage: "Step 2 completed successfully."
           statusLabel: "Step 2 Completed"
+
+      - name: Wait 5 Seconds
+        run: sleep 5
 
       - name: Log Step 3 Progress
         uses: port-labs/port-github-action@v1
@@ -49,10 +51,11 @@ jobs:
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
-          logMessage: |
-            [Status: Step 3 Completed]
-            Step 3 completed successfully.
+          logMessage: "Step 3 completed successfully."
           statusLabel: "Step 3 Completed"
+
+      - name: Wait 5 Seconds
+        run: sleep 5
 
       - name: Simulate Error in Step 4
         id: simulate-error
@@ -64,9 +67,8 @@ jobs:
       - name: Extract Error Details
         if: failure()
         run: |
-          echo "Error Log: ${{ steps.simulate-error.outcome }}" >> $GITHUB_ENV
-          echo "Error Details: Simulating error log data for debugging." >> $GITHUB_ENV
-          echo "Failure Step: Step 4" >> $GITHUB_ENV
+          echo "Error Log: Simulated failure in Step 4." >> $GITHUB_ENV
+          echo "Error Details: This is an example error log for debugging purposes." >> $GITHUB_ENV
 
       - name: Log Step 4 Error and Update Status
         if: failure()
@@ -78,13 +80,16 @@ jobs:
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
           logMessage: |
-            [Status: Error in Step 4]
             Error in Step 4: Pipeline halted due to an issue.
             Error Log: ${{ env.Error_Log }}
             Error Details: ${{ env.Error_Details }}
           statusLabel: "Error in Step 4"
 
-      - name: Log Final Status
+      - name: Wait 5 Seconds
+        run: sleep 5
+
+      - name: Log Final Status with Error Details
+        if: always()
         uses: port-labs/port-github-action@v1
         with:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
@@ -93,6 +98,5 @@ jobs:
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
           logMessage: |
-            [Status: Pipeline Failed]
-            Pipeline completed with errors.
+            Pipeline completed with errors - error: "${{ env.Error_Details }}"
           statusLabel: "Pipeline Failed"
