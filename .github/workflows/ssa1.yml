@@ -46,10 +46,20 @@ jobs:
           logMessage: "Step 3 completed successfully."
 
       - name: Simulate Error in Step 4
-        run: exit 1
+        id: simulate-error
+        run: |
+          echo "This is an example error log for Step 4" >&2
+          exit 1
         continue-on-error: true
 
-      - name: Log Step 4 Error
+      - name: Extract Error Details
+        if: failure()
+        run: |
+          echo "Error Log: ${{ steps.simulate-error.outcome }}" >> $GITHUB_ENV
+          echo "Error Details: Simulating error log data for debugging." >> $GITHUB_ENV
+          echo "Failure Step: Step 4" >> $GITHUB_ENV
+
+      - name: Log Step 4 Error with Details
         if: failure()
         uses: port-labs/port-github-action@v1
         with:
@@ -58,7 +68,11 @@ jobs:
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
-          logMessage: "Error in Step 4: Pipeline halted due to an issue."
+          logMessage: |
+            Error in Step 4: Pipeline halted due to an issue.
+            Error Log: ${{ env.Error_Log }}
+            Error Details: ${{ env.Error_Details }}
+            Failure Step: ${{ env.Failure_Step }}
 
       - name: Log Final Status
         uses: port-labs/port-github-action@v1
@@ -68,4 +82,5 @@ jobs:
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{ fromJson(inputs.port_payload).runId }}
-          logMessage: "Pipeline completed with errors."
+          logMessage: |
+            Pipeline completed with errors.
