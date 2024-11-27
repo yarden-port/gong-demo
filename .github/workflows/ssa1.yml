@@ -107,7 +107,6 @@ jobs:
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "status": "IN_PROGRESS",
             "statusLabel": "Error in Step 4",
             "summary": "Error in Step 4: Pipeline halted due to an issue."
           }'
