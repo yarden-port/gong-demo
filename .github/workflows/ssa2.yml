@@ -29,7 +29,7 @@ jobs:
       - name: Sanitize Workflow Identifier
         id: sanitize-workflow-id
         run: |
-          sanitized_workflow_id=$(echo "${{ github.event.inputs.port_payload.workflow_id }}" | sed 's/[^A-Za-z0-9@_.+:\/=-]//g')
+          sanitized_workflow_id=$(echo "${{ github.event.inputs.port_payload.run_id }}" | sed 's/[^A-Za-z0-9@_.+:\/=-]//g')
           echo "SANITIZED_WORKFLOW_ID=$sanitized_workflow_id" >> $GITHUB_ENV
 
       - name: Trigger Deployment Pipeline
