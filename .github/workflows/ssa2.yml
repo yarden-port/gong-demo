@@ -26,21 +26,6 @@ jobs:
           }' | jq '.accessToken' | sed 's/"//g')
           echo "ACCESS_TOKEN=$access_token" >> $GITHUB_ENV
 
-      - name: Create Workflow Entity
-        id: create-workflow
-        run: |
-          curl -L -X POST "https://api.getport.io/v1/blueprints/workflow/entities" \
-          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "identifier": "workflow-${{ github.run_id }}",
-            "title": "Workflow - ${{ github.run_id }}",
-            "blueprint": "workflow",
-            "properties": {
-              "status": "IN_PROGRESS"
-            }
-          }'
-
       - name: Trigger Deployment Pipeline
         run: |
           curl -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
