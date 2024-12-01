@@ -199,6 +199,6 @@ jobs:
           -d '{
             "properties": {
               "status": "FAILED",
-              "status_message": "Step 3 has failed with error: Step 3 encountered an unexpected error."
+              "status_message": "Deployment deployment-2, step 3 has failed with error: Step 3 encountered an unexpected error."
             }
           }'
