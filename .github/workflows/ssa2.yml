@@ -26,12 +26,6 @@ jobs:
           }' | jq '.accessToken' | sed 's/"//g')
           echo "ACCESS_TOKEN=$access_token" >> $GITHUB_ENV
 
-      - name: Sanitize Workflow Identifier
-        id: sanitize-workflow-id
-        run: |
-          sanitized_workflow_id=$(echo "${{ github.event.inputs.port_payload.run_id }}" | sed 's/[^A-Za-z0-9@_.+:\/=-]//g')
-          echo "SANITIZED_WORKFLOW_ID=$sanitized_workflow_id" >> $GITHUB_ENV
-
       - name: Trigger Deployment Pipeline
         run: |
           curl -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
@@ -39,13 +33,13 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
             "identifier": "deployment-${{ github.run_id }}",
-            "title": "Deployment for Workflow - ${{ env.SANITIZED_WORKFLOW_ID }}",
+            "title": "Deployment for Workflow - ${{ github.event.inputs.port_payload.run_id }}",
             "blueprint": "deployment",
             "properties": {
               "status": "IN_PROGRESS"
             },
             "relations": {
-              "workflow": "${{ env.SANITIZED_WORKFLOW_ID }}"
+              "workflow": "${{ github.event.inputs.port_payload.run_id }}"
             }
           }'
 
@@ -118,7 +112,7 @@ jobs:
       - name: Update Workflow as Failed
         if: always()
         run: |
-          curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/${{ env.SANITIZED_WORKFLOW_ID }}" \
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/${{ github.event.inputs.port_payload.run_id }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
