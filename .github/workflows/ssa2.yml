@@ -40,7 +40,7 @@ jobs:
             "blueprint": "deployment",
             "properties": {
               "status": "IN_PROGRESS",
-              "status_code": "IN_PROGRESS"
+              "status_message": "Deployment is in progress."
             },
             "relations": {
               "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
@@ -80,7 +80,7 @@ jobs:
             "blueprint": "step",
             "properties": {
               "status": "COMPLETED",
-              "status_code": "200"
+              "status_message": "Step 1 completed successfully."
             },
             "relations": {
               "deployment": "deployment-${{ github.run_id }}"
@@ -102,8 +102,7 @@ jobs:
             "blueprint": "step",
             "properties": {
               "status": "FAILED",
-              "status_code": "500",
-              "error_message": "Step 2 encountered an unexpected error."
+              "status_message": "Step 2 encountered an unexpected error."
             },
             "relations": {
               "deployment": "deployment-${{ github.run_id }}"
@@ -122,8 +121,7 @@ jobs:
           -d '{
             "properties": {
               "status": "FAILED",
-              "status_code": "500",
-              "error_message": "Step 2 has failed with status code 500 and error: Step 2 encountered an unexpected error."
+              "status_message": "Step 2 has failed with error: Step 2 encountered an unexpected error."
             }
           }'
 
@@ -139,7 +137,6 @@ jobs:
           -d '{
             "properties": {
               "status": "FAILED",
-              "status_code": "500",
-              "error_message": "Step 2 has failed with status code 500 and error: Step 2 encountered an unexpected error."
+              "status_message": "Step 2 has failed with error: Step 2 encountered an unexpected error."
             }
           }'
