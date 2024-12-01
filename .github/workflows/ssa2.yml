@@ -1,4 +1,4 @@
-name: SSA 2 - Workflow with Deployment and Steps
+name: SSA 2 - Workflow with Multiple Deployments and Steps
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
         type: string
 
 jobs:
-  create-deployment:
+  create-deployments:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -29,26 +29,49 @@ jobs:
       - name: Sleep for 5 Seconds
         run: sleep 5
 
-      - name: Trigger Deployment Pipeline
+      - name: Trigger First Deployment
+        id: deploy-1
         run: |
           curl -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "identifier": "deployment-${{ github.run_id }}",
-            "title": "Deployment for Workflow - ${{ fromJson(inputs.port_payload).workflow_id }}",
+            "identifier": "deployment-1-${{ github.run_id }}",
+            "title": "First Deployment for Workflow - ${{ fromJson(inputs.port_payload).workflow_id }}",
             "blueprint": "deployment",
             "properties": {
               "status": "IN_PROGRESS",
-              "status_message": "Deployment is in progress."
+              "status_message": "First deployment in progress."
             },
             "relations": {
               "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
             }
           }'
 
-  create-steps:
-    needs: create-deployment
+      - name: Sleep for 5 Seconds
+        run: sleep 5
+
+      - name: Trigger Second Deployment
+        id: deploy-2
+        run: |
+          curl -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "identifier": "deployment-2-${{ github.run_id }}",
+            "title": "Second Deployment for Workflow - ${{ fromJson(inputs.port_payload).workflow_id }}",
+            "blueprint": "deployment",
+            "properties": {
+              "status": "IN_PROGRESS",
+              "status_message": "Second deployment in progress."
+            },
+            "relations": {
+              "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
+            }
+          }'
+
+  process-deployments:
+    needs: create-deployments
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -68,60 +91,98 @@ jobs:
       - name: Sleep for 5 Seconds
         run: sleep 5
 
-      - name: Create First Step
-        id: create-step1
+      - name: First Deployment - Step 1 (Success)
+        id: step-1-deploy-1
         run: |
           curl -L -X POST "https://api.getport.io/v1/blueprints/step/entities" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "identifier": "step-1-${{ github.run_id }}",
-            "title": "Step 1 for Deployment",
+            "identifier": "step-1-deployment-1-${{ github.run_id }}",
+            "title": "Step 1 for First Deployment",
             "blueprint": "step",
             "properties": {
               "status": "COMPLETED",
               "status_message": "Step 1 completed successfully."
             },
             "relations": {
-              "deployment": "deployment-${{ github.run_id }}"
+              "deployment": "deployment-1-${{ github.run_id }}"
             }
           }'
 
       - name: Sleep for 5 Seconds
         run: sleep 5
 
-      - name: Simulate Step 2 Failure
-        id: create-step2
+      - name: First Deployment - Step 2 (Success)
+        id: step-2-deploy-1
         run: |
           curl -L -X POST "https://api.getport.io/v1/blueprints/step/entities" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "identifier": "step-2-${{ github.run_id }}",
-            "title": "Step 2 for Deployment",
+            "identifier": "step-2-deployment-1-${{ github.run_id }}",
+            "title": "Step 2 for First Deployment",
             "blueprint": "step",
             "properties": {
-              "status": "FAILED",
-              "status_message": "Step 2 encountered an unexpected error."
+              "status": "COMPLETED",
+              "status_message": "Step 2 completed successfully."
             },
             "relations": {
-              "deployment": "deployment-${{ github.run_id }}"
+              "deployment": "deployment-1-${{ github.run_id }}"
             }
           }'
 
       - name: Sleep for 5 Seconds
         run: sleep 5
 
-      - name: Update Deployment as Failed
-        if: always()
+      - name: Update First Deployment as Completed
+        id: complete-deploy-1
         run: |
-          curl -L -X PATCH "https://api.getport.io/v1/blueprints/deployment/entities/deployment-${{ github.run_id }}" \
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/deployment/entities/deployment-1-${{ github.run_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "COMPLETED",
+              "status_message": "First deployment completed successfully."
+            }
+          }'
+
+      - name: Sleep for 5 Seconds
+        run: sleep 5
+
+      - name: Second Deployment - Step 3 (Failure)
+        id: step-3-deploy-2
+        run: |
+          curl -L -X POST "https://api.getport.io/v1/blueprints/step/entities" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "identifier": "step-3-deployment-2-${{ github.run_id }}",
+            "title": "Step 3 for Second Deployment",
+            "blueprint": "step",
+            "properties": {
+              "status": "FAILED",
+              "status_message": "Step 3 encountered an unexpected error."
+            },
+            "relations": {
+              "deployment": "deployment-2-${{ github.run_id }}"
+            }
+          }'
+
+      - name: Sleep for 5 Seconds
+        run: sleep 5
+
+      - name: Update Second Deployment as Failed
+        id: fail-deploy-2
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/deployment/entities/deployment-2-${{ github.run_id }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
             "properties": {
               "status": "FAILED",
-              "status_message": "Step 2 has failed with error: Step 2 encountered an unexpected error."
+              "status_message": "Step 3 has failed with error: Step 3 encountered an unexpected error."
             }
           }'
 
@@ -130,6 +191,7 @@ jobs:
 
       - name: Update Workflow as Failed
         if: always()
+        id: fail-workflow
         run: |
           curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/${{ fromJson(inputs.port_payload).workflow_id }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
@@ -137,6 +199,6 @@ jobs:
           -d '{
             "properties": {
               "status": "FAILED",
-              "status_message": "Step 2 has failed with error: Step 2 encountered an unexpected error."
+              "status_message": "Step 3 has failed with error: Step 3 encountered an unexpected error."
             }
           }'
