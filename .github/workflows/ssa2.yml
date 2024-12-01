@@ -39,7 +39,8 @@ jobs:
             "title": "Deployment for Workflow - ${{ fromJson(inputs.port_payload).workflow_id }}",
             "blueprint": "deployment",
             "properties": {
-              "status": "IN_PROGRESS"
+              "status": "IN_PROGRESS",
+              "status_code": "IN_PROGRESS"
             },
             "relations": {
               "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
@@ -78,7 +79,8 @@ jobs:
             "title": "Step 1 for Deployment",
             "blueprint": "step",
             "properties": {
-              "status": "COMPLETED"
+              "status": "COMPLETED",
+              "status_code": "200"
             },
             "relations": {
               "deployment": "deployment-${{ github.run_id }}"
@@ -99,7 +101,9 @@ jobs:
             "title": "Step 2 for Deployment",
             "blueprint": "step",
             "properties": {
-              "status": "FAILED"
+              "status": "FAILED",
+              "status_code": "500",
+              "error_message": "Step 2 encountered an unexpected error."
             },
             "relations": {
               "deployment": "deployment-${{ github.run_id }}"
@@ -117,7 +121,9 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
             "properties": {
-              "status": "FAILED"
+              "status": "FAILED",
+              "status_code": "500",
+              "error_message": "Step 2 has failed with status code 500 and error: Step 2 encountered an unexpected error."
             }
           }'
 
@@ -132,6 +138,8 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
             "properties": {
-              "status": "FAILED"
+              "status": "FAILED",
+              "status_code": "500",
+              "error_message": "Step 2 has failed with status code 500 and error: Step 2 encountered an unexpected error."
             }
           }'
