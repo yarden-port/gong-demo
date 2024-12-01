@@ -9,7 +9,7 @@ on:
         type: string
 
 jobs:
-  create-workflow:
+  create-deployment:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -44,7 +44,7 @@ jobs:
           }'
 
   create-steps:
-    needs: create-workflow
+    needs: create-deployment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
