@@ -33,13 +33,13 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
             "identifier": "deployment-${{ github.run_id }}",
-            "title": "Deployment for Workflow - ${{ github.event.inputs.port_payload.run_id }}",
+            "title": "Deployment for Workflow - ${{ github.event.inputs.port_payload.workflow_id }}",
             "blueprint": "deployment",
             "properties": {
               "status": "IN_PROGRESS"
             },
             "relations": {
-              "workflow": "${{ github.event.inputs.port_payload.run_id }}"
+              "workflow": "${{ github.event.inputs.port_payload.workflow_id }}"
             }
           }'
 
@@ -112,7 +112,7 @@ jobs:
       - name: Update Workflow as Failed
         if: always()
         run: |
-          curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/${{ github.event.inputs.port_payload.run_id }}" \
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/${{ github.event.inputs.port_payload.workflow_id }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
