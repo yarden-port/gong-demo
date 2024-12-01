@@ -1,0 +1,142 @@
+name: SSA 2 - Workflow with Deployment and Steps
+
+on:
+  workflow_dispatch:
+    inputs:
+      port_payload:
+        required: true
+        description: "Port's payload with details about the workflow entity."
+        type: string
+
+jobs:
+  create-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Generate Access Token
+        id: generate-token
+        run: |
+          access_token=$(curl --location --request POST 'https://api.getport.io/v1/auth/access_token' \
+          --header 'Content-Type: application/json' \
+          --data-raw '{
+              "clientId": "'${{ secrets.PORT_CLIENT_ID }}'",
+              "clientSecret": "'${{ secrets.PORT_CLIENT_SECRET }}'"
+          }' | jq '.accessToken' | sed 's/"//g')
+          echo "ACCESS_TOKEN=$access_token" >> $GITHUB_ENV
+
+      - name: Create Workflow Entity
+        id: create-workflow
+        run: |
+          curl -L -X POST "https://api.getport.io/v1/blueprints/workflow/entities" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "identifier": "workflow-${{ github.run_id }}",
+            "title": "Workflow - ${{ github.run_id }}",
+            "blueprint": "workflow",
+            "properties": {
+              "status": "IN_PROGRESS"
+            }
+          }'
+
+      - name: Trigger Deployment Pipeline
+        run: |
+          curl -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "identifier": "deployment-${{ github.run_id }}",
+            "title": "Deployment - ${{ github.run_id }}",
+            "blueprint": "deployment",
+            "properties": {
+              "status": "IN_PROGRESS"
+            },
+            "relations": {
+              "workflow": "workflow-${{ github.run_id }}"
+            }
+          }'
+
+  create-steps:
+    needs: create-workflow
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Generate Access Token
+        id: generate-token
+        run: |
+          access_token=$(curl --location --request POST 'https://api.getport.io/v1/auth/access_token' \
+          --header 'Content-Type: application/json' \
+          --data-raw '{
+              "clientId": "'${{ secrets.PORT_CLIENT_ID }}'",
+              "clientSecret": "'${{ secrets.PORT_CLIENT_SECRET }}'"
+          }' | jq '.accessToken' | sed 's/"//g')
+          echo "ACCESS_TOKEN=$access_token" >> $GITHUB_ENV
+
+      - name: Create First Step
+        id: create-step1
+        run: |
+          curl -L -X POST "https://api.getport.io/v1/blueprints/step/entities" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "identifier": "step-1-${{ github.run_id }}",
+            "title": "Step 1 - ${{ github.run_id }}",
+            "blueprint": "step",
+            "properties": {
+              "status": "IN_PROGRESS"
+            },
+            "relations": {
+              "deployment": "deployment-${{ github.run_id }}"
+            }
+          }'
+
+      - name: Simulate Step 1 Completion and Create Step 2
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/step/entities/step-1-${{ github.run_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "COMPLETED"
+            }
+          }'
+          curl -L -X POST "https://api.getport.io/v1/blueprints/step/entities" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "identifier": "step-2-${{ github.run_id }}",
+            "title": "Step 2 - ${{ github.run_id }}",
+            "blueprint": "step",
+            "properties": {
+              "status": "FAILED"
+            },
+            "relations": {
+              "deployment": "deployment-${{ github.run_id }}"
+            }
+          }'
+
+      - name: Mark Deployment as Failed
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/deployment/entities/deployment-${{ github.run_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "FAILED"
+            }
+          }'
+
+      - name: Mark Workflow as Failed
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/workflow-${{ github.run_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "FAILED"
+            }
+          }'
