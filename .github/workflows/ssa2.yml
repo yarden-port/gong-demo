@@ -33,13 +33,13 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
             "identifier": "deployment-${{ github.run_id }}",
-            "title": "Deployment - ${{ github.run_id }}",
+            "title": "Deployment for Workflow - ${{ github.event.inputs.port_payload.workflow_id }}",
             "blueprint": "deployment",
             "properties": {
               "status": "IN_PROGRESS"
             },
             "relations": {
-              "workflow": "workflow-${{ github.run_id }}"
+              "workflow": "${{ github.event.inputs.port_payload.workflow_id }}"
             }
           }'
 
@@ -69,32 +69,25 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
             "identifier": "step-1-${{ github.run_id }}",
-            "title": "Step 1 - ${{ github.run_id }}",
+            "title": "Step 1 for Deployment",
             "blueprint": "step",
             "properties": {
-              "status": "IN_PROGRESS"
+              "status": "COMPLETED"
             },
             "relations": {
               "deployment": "deployment-${{ github.run_id }}"
             }
           }'
 
-      - name: Simulate Step 1 Completion and Create Step 2
+      - name: Simulate Step 2 Failure
+        id: create-step2
         run: |
-          curl -L -X PATCH "https://api.getport.io/v1/blueprints/step/entities/step-1-${{ github.run_id }}" \
-          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "properties": {
-              "status": "COMPLETED"
-            }
-          }'
           curl -L -X POST "https://api.getport.io/v1/blueprints/step/entities" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
             "identifier": "step-2-${{ github.run_id }}",
-            "title": "Step 2 - ${{ github.run_id }}",
+            "title": "Step 2 for Deployment",
             "blueprint": "step",
             "properties": {
               "status": "FAILED"
@@ -104,7 +97,8 @@ jobs:
             }
           }'
 
-      - name: Mark Deployment as Failed
+      - name: Update Deployment as Failed
+        if: always()
         run: |
           curl -L -X PATCH "https://api.getport.io/v1/blueprints/deployment/entities/deployment-${{ github.run_id }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
@@ -115,9 +109,10 @@ jobs:
             }
           }'
 
-      - name: Mark Workflow as Failed
+      - name: Update Workflow as Failed
+        if: always()
         run: |
-          curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/workflow-${{ github.run_id }}" \
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/${{ github.event.inputs.port_payload.workflow_id }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
