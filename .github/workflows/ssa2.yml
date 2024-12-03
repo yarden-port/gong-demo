@@ -41,7 +41,7 @@ jobs:
             "blueprint": "deployment",
             "properties": {
               "status": "IN_PROGRESS",
-              "status_message": "First deployment in progress."
+              "status_message": "First deployment is in progress."
             },
             "relations": {
               "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
@@ -63,15 +63,12 @@ jobs:
             "blueprint": "deployment",
             "properties": {
               "status": "IN_PROGRESS",
-              "status_message": "Second deployment in progress."
+              "status_message": "Second deployment is in progress."
             },
             "relations": {
               "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
             }
           }'
-
-      - name: Sleep for 5 Seconds
-        run: sleep 5
 
   process-steps:
     needs: create-deployments
@@ -107,7 +104,7 @@ jobs:
             "properties": {
               "status": "COMPLETED",
               "status_message": "Step 1 completed successfully.",
-              "log_stream": "### Log Stream for Step 1\n**Deployment:** deployment-1-${{ github.run_id }}\n**Status:** **COMPLETED**\n**Message:** Step 1 completed successfully.\n\n#### Logs:\n- Container image `user-service:v1.2.3` pulled successfully.\n- Applied Kubernetes deployment manifest.\n- Service is running at `https://prod-cluster-01.example.com/user-service`.\n\n**Timestamp:** $(date -u +\"%Y-%m-%dT%H:%M:%SZ\")"
+              "log_stream": "### Log Stream for Step 1\n**Deployment:** deployment-1-${{ github.run_id }}\n**Status:** **COMPLETED**\n**Logs:**\n- Starting deployment for `user-service`.\n- Pulled container image `user-service:v1.2.3`.\n- Successfully applied Kubernetes manifest.\n- Deployment finished successfully at 2024-11-27T12:00:00Z.\n"
             },
             "relations": {
               "deployment": "deployment-1-${{ github.run_id }}"
@@ -130,10 +127,26 @@ jobs:
             "properties": {
               "status": "COMPLETED",
               "status_message": "Step 2 completed successfully.",
-              "log_stream": "### Log Stream for Step 2\n**Deployment:** deployment-1-${{ github.run_id }}\n**Status:** **COMPLETED**\n**Message:** Verified successful health checks for `user-service`.\n\n#### Logs:\n- Running health check on `https://prod-cluster-01.example.com/user-service`.\n- Service responded with HTTP 200.\n- Deployment validated successfully.\n\n**Timestamp:** $(date -u +\"%Y-%m-%dT%H:%M:%SZ\")"
+              "log_stream": "### Log Stream for Step 2\n**Deployment:** deployment-1-${{ github.run_id }}\n**Status:** **COMPLETED**\n**Logs:**\n- Running service validation for `user-service`.\n- Service passed all health checks.\n- Deployment validated at 2024-11-27T12:05:00Z.\n"
             },
             "relations": {
               "deployment": "deployment-1-${{ github.run_id }}"
+            }
+          }'
+
+      - name: Sleep for 5 Seconds
+        run: sleep 5
+
+      - name: Update First Deployment as Completed
+        id: update-deployment-1
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/deployment/entities/deployment-1-${{ github.run_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "COMPLETED",
+              "status_message": "Deployment completed successfully after all steps."
             }
           }'
 
@@ -153,9 +166,41 @@ jobs:
             "properties": {
               "status": "FAILED",
               "status_message": "Step 3 encountered an unexpected error.",
-              "log_stream": "### Log Stream for Step 3\n**Deployment:** deployment-2-${{ github.run_id }}\n**Status:** **FAILED**\n**Error:** Failed to deploy service `order-service`.\n\n#### Logs:\n- Fetching container image `order-service:v2.5.1`.\n- Error: Image pull failed due to network timeout.\n- Retrying pull operation (attempt 1 of 3)...\n- Retrying pull operation (attempt 2 of 3)...\n- Retrying pull operation (attempt 3 of 3)...\n- Final error: Image pull failed. Deployment aborted.\n\n**Timestamp:** $(date -u +\"%Y-%m-%dT%H:%M:%SZ\")"
+              "log_stream": "### Log Stream for Step 3\n**Deployment:** deployment-2-${{ github.run_id }}\n**Status:** **FAILED**\n**Logs:**\n- Pulling container image `order-service:v2.5.1`.\n- Error: Network timeout while pulling image.\n- Retry attempts failed. Step terminated at 2024-11-27T12:10:00Z.\n"
             },
             "relations": {
               "deployment": "deployment-2-${{ github.run_id }}"
+            }
+          }'
+
+      - name: Sleep for 5 Seconds
+        run: sleep 5
+
+      - name: Update Second Deployment as Failed
+        id: update-deployment-2
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/deployment/entities/deployment-2-${{ github.run_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "FAILED",
+              "status_message": "Deployment failed at Step 3 with error: Network timeout while pulling image."
+            }
+          }'
+
+      - name: Sleep for 5 Seconds
+        run: sleep 5
+
+      - name: Update Workflow as Failed
+        id: update-workflow
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/${{ fromJson(inputs.port_payload).workflow_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "FAILED",
+              "status_message": "Workflow failed at deployment-2, step-3 with error: Network timeout while pulling image."
             }
           }'
