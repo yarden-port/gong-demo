@@ -1,4 +1,4 @@
-name: SSA 2 - Workflow with Detailed Steps and Logs
+name: SSA 2 - Workflow with Multiple Deployments, Steps, and Logs
 
 on:
   workflow_dispatch:
@@ -104,7 +104,7 @@ jobs:
             "properties": {
               "status": "COMPLETED",
               "status_message": "Step 1 completed successfully.",
-              "log_stream": "### Log Stream for Step 1\n**Deployment:** deployment-1-${{ github.run_id }}\n**Status:** **COMPLETED**\n\n**Logs:**\n- Starting deployment for `user-service`.\n- Verifying access to container registry at `registry.example.com`.\n- Pulling container image `user-service:v1.2.3`:\n  - Layer 1/3: Downloaded successfully.\n  - Layer 2/3: Downloaded successfully.\n  - Layer 3/3: Downloaded successfully.\n- Applying Kubernetes deployment manifest:\n  - Namespace: `production`.\n  - Resources: 2 CPU, 4GB RAM.\n  - Service: Exposed on port 443.\n- Deployment completed successfully:\n  - Service is available at `https://prod-cluster-01.example.com/user-service`.\n  - Deployment timestamp: $(date -u +\"%Y-%m-%dT%H:%M:%SZ\").\n"
+              "log_stream": "### Log Stream for Step 1\n**Deployment:** deployment-1-${{ github.run_id }}\n**Status:** **COMPLETED**\n**Logs:**\n- Starting deployment for `user-service`.\n- Pulled container image `user-service:v1.2.3`.\n- Successfully applied Kubernetes manifest.\n- Deployment finished successfully at 2024-11-27T12:00:00Z.\n"
             },
             "relations": {
               "deployment": "deployment-1-${{ github.run_id }}"
@@ -127,10 +127,26 @@ jobs:
             "properties": {
               "status": "COMPLETED",
               "status_message": "Step 2 completed successfully.",
-              "log_stream": "### Log Stream for Step 2\n**Deployment:** deployment-1-${{ github.run_id }}\n**Status:** **COMPLETED**\n\n**Logs:**\n- Running post-deployment validation:\n  - Health check endpoint: `https://prod-cluster-01.example.com/user-service/health`.\n  - Expected response: HTTP 200 OK.\n  - Actual response: HTTP 200 OK.\n- Validation passed successfully.\n- Deployment marked as stable.\n  - Service `user-service` is now live.\n  - Validation timestamp: $(date -u +\"%Y-%m-%dT%H:%M:%SZ\").\n"
+              "log_stream": "### Log Stream for Step 2\n**Deployment:** deployment-1-${{ github.run_id }}\n**Status:** **COMPLETED**\n**Logs:**\n- Running service validation for `user-service`.\n- Service passed all health checks.\n- Deployment validated at 2024-11-27T12:05:00Z.\n"
             },
             "relations": {
               "deployment": "deployment-1-${{ github.run_id }}"
+            }
+          }'
+
+      - name: Sleep for 5 Seconds
+        run: sleep 5
+
+      - name: Update First Deployment as Completed
+        id: update-deployment-1
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/deployment/entities/deployment-1-${{ github.run_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "COMPLETED",
+              "status_message": "Deployment completed successfully after all steps."
             }
           }'
 
@@ -150,7 +166,7 @@ jobs:
             "properties": {
               "status": "FAILED",
               "status_message": "Step 3 encountered an unexpected error.",
-              "log_stream": "### Log Stream for Step 3\n**Deployment:** deployment-2-${{ github.run_id }}\n**Status:** **FAILED**\n\n**Logs:**\n- Starting deployment for `order-service`.\n- Pulling container image `order-service:v2.5.1`:\n  - Error: Network timeout during layer 2/3 download.\n  - Retrying...\n  - Error: Registry unreachable after 3 retries.\n- Deployment aborted:\n  - Root cause: Network connectivity issue.\n  - Timestamp: $(date -u +\"%Y-%m-%dT%H:%M:%SZ\").\n"
+              "log_stream": "### Log Stream for Step 3\n**Deployment:** deployment-2-${{ github.run_id }}\n**Status:** **FAILED**\n**Logs:**\n- Pulling container image `order-service:v2.5.1`.\n- Error: Network timeout while pulling image.\n- Retry attempts failed. Step terminated at 2024-11-27T12:10:00Z.\n"
             },
             "relations": {
               "deployment": "deployment-2-${{ github.run_id }}"
@@ -159,3 +175,32 @@ jobs:
 
       - name: Sleep for 5 Seconds
         run: sleep 5
+
+      - name: Update Second Deployment as Failed
+        id: update-deployment-2
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/deployment/entities/deployment-2-${{ github.run_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "FAILED",
+              "status_message": "Deployment failed at Step 3 with error: Network timeout while pulling image."
+            }
+          }'
+
+      - name: Sleep for 5 Seconds
+        run: sleep 5
+
+      - name: Update Workflow as Failed
+        id: update-workflow
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/${{ fromJson(inputs.port_payload).workflow_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "FAILED",
+              "status_message": "Workflow failed at deployment-2, step-3 with error: Network timeout while pulling image."
+            }
+          }'
