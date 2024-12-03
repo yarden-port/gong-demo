@@ -51,7 +51,29 @@ jobs:
       - name: Sleep for 5 Seconds
         run: sleep 5
 
-  process-deployments:
+      - name: Trigger Second Deployment
+        id: deploy-2
+        run: |
+          curl -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "identifier": "deployment-2-${{ github.run_id }}",
+            "title": "Second Deployment for Workflow - ${{ fromJson(inputs.port_payload).workflow_id }}",
+            "blueprint": "deployment",
+            "properties": {
+              "status": "IN_PROGRESS",
+              "status_message": "Second deployment in progress."
+            },
+            "relations": {
+              "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
+            }
+          }'
+
+      - name: Sleep for 5 Seconds
+        run: sleep 5
+
+  process-steps:
     needs: create-deployments
     runs-on: ubuntu-latest
     steps:
