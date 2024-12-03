@@ -104,7 +104,7 @@ jobs:
             "properties": {
               "status": "COMPLETED",
               "status_message": "Step 1 completed successfully.",
-              "log_stream": "### Log Stream for Step 1\n**Deployment:** deployment-1-${{ github.run_id }}\n**Status:** **COMPLETED**\n**Logs:**\n- Starting deployment for `user-service`.\n- Pulled container image `user-service:v1.2.3`.\n- Successfully applied Kubernetes manifest.\n- Deployment finished successfully at 2024-11-27T12:00:00Z.\n"
+              "log_stream": "### Log Stream for Step 1\n**Deployment:** deployment-2-${{ github.run_id }}\n**Status:** **COMPLETED**\n**Logs:**\n- [INFO] 2024-12-01T08:00:00Z: Initializing deployment for `payment-service`.\n- [INFO] 2024-12-01T08:00:10Z: Checking available resources on cluster `prod-cluster-02`.\n- [INFO] 2024-12-01T08:00:20Z: Resource check passed. CPU: 60% available, Memory: 70% available.\n- [INFO] 2024-12-01T08:00:30Z: Pulling container image `payment-service:v2.0.1` from registry `dockerhub.io`.\n- [INFO] 2024-12-01T08:00:50Z: Image pulled successfully.\n- [INFO] 2024-12-01T08:01:00Z: Applying Kubernetes deployment manifest.\n- [INFO] 2024-12-01T08:01:15Z: Deployment manifest validated and applied successfully.\n- [INFO] 2024-12-01T08:01:30Z: Waiting for Kubernetes pods to initialize...\n- [INFO] 2024-12-01T08:01:50Z: Pod `payment-service-abc123` in `Running` state. Readiness probe passed.\n- [INFO] 2024-12-01T08:02:00Z: Scaling deployment to 4 replicas.\n- [INFO] 2024-12-01T08:02:30Z: All replicas in `Running` state.\n- [INFO] 2024-12-01T08:02:45Z: Load balancer configuration successful.\n- [INFO] 2024-12-01T08:03:00Z: Verifying external access to service.\n- [INFO] 2024-12-01T08:03:20Z: Service accessible at `https://prod-cluster-02.example.com/payment-service`.\n- [SUCCESS] 2024-12-01T08:03:30Z: Deployment completed successfully."
             },
             "relations": {
               "deployment": "deployment-1-${{ github.run_id }}"
@@ -127,7 +127,7 @@ jobs:
             "properties": {
               "status": "COMPLETED",
               "status_message": "Step 2 completed successfully.",
-              "log_stream": "### Log Stream for Step 2\n**Deployment:** deployment-1-${{ github.run_id }}\n**Status:** **COMPLETED**\n**Logs:**\n- Running service validation for `user-service`.\n- Service passed all health checks.\n- Deployment validated at 2024-11-27T12:05:00Z.\n"
+              "log_stream": "### Log Stream for Step 1\n**Deployment:** deployment-3-${{ github.run_id }}\n**Status:** **COMPLETED**\n**Logs:**\n- [INFO] 2024-12-02T14:00:00Z: Initializing deployment for `auth-service`.\n- [INFO] 2024-12-02T14:00:15Z: Checking available resources on cluster `prod-cluster-03`.\n- [INFO] 2024-12-02T14:00:25Z: Resource check passed. CPU: 45% available, Memory: 55% available.\n- [INFO] 2024-12-02T14:00:40Z: Pulling container image `auth-service:v1.3.0` from registry `dockerhub.io`.\n- [INFO] 2024-12-02T14:01:10Z: Image pulled successfully.\n- [INFO] 2024-12-02T14:01:25Z: Applying Kubernetes deployment manifest.\n- [INFO] 2024-12-02T14:01:40Z: Deployment manifest validated and applied successfully.\n- [INFO] 2024-12-02T14:02:00Z: Pod `auth-service-def456` in `Running` state. Readiness probe passed.\n- [INFO] 2024-12-02T14:02:20Z: Scaling deployment to 2 replicas.\n- [INFO] 2024-12-02T14:02:50Z: All replicas in `Running` state.\n- [INFO] 2024-12-02T14:03:00Z: Verifying external access to service.\n- [INFO] 2024-12-02T14:03:20Z: Service accessible at `https://prod-cluster-03.example.com/auth-service`.\n- [SUCCESS] 2024-12-02T14:03:30Z: Deployment completed successfully."
             },
             "relations": {
               "deployment": "deployment-1-${{ github.run_id }}"
@@ -166,7 +166,7 @@ jobs:
             "properties": {
               "status": "FAILED",
               "status_message": "Step 3 encountered an unexpected error.",
-              "log_stream": "### Log Stream for Step 3\n**Deployment:** deployment-2-${{ github.run_id }}\n**Status:** **FAILED**\n**Logs:**\n- Pulling container image `order-service:v2.5.1`.\n- Error: Network timeout while pulling image.\n- Retry attempts failed. Step terminated at 2024-11-27T12:10:00Z.\n"
+              "log_stream": "### Log Stream for Step 1\n**Deployment:** deployment-4-${{ github.run_id }}\n**Status:** **FAILED**\n**Logs:**\n- [INFO] 2024-12-03T10:00:00Z: Initializing deployment for `analytics-service`.\n- [INFO] 2024-12-03T10:00:15Z: Checking available resources on cluster `prod-cluster-04`.\n- [INFO] 2024-12-03T10:00:25Z: Resource check passed. CPU: 40% available, Memory: 50% available.\n- [INFO] 2024-12-03T10:00:40Z: Pulling container image `analytics-service:v1.5.0` from registry `dockerhub.io`.\n- [INFO] 2024-12-03T10:01:10Z: Image pulled successfully.\n- [INFO] 2024-12-03T10:01:25Z: Applying Kubernetes deployment manifest.\n- [ERROR] 2024-12-03T10:01:45Z: Failed to apply deployment manifest. Error: `Insufficient permissions to update namespace 'analytics'`.\n- [INFO] 2024-12-03T10:02:00Z: Rolling back changes.\n- [INFO] 2024-12-03T10:02:20Z: Changes rolled back successfully.\n- [ERROR] 2024-12-03T10:02:30Z: Deployment failed. Contact cluster administrator to resolve permission issues."
             },
             "relations": {
               "deployment": "deployment-2-${{ github.run_id }}"
