@@ -26,23 +26,23 @@ jobs:
           }' | jq -r '.accessToken')
           echo "ACCESS_TOKEN=$access_token" >> $GITHUB_ENV
 
-      - name: Trigger First Deployment
-        id: deploy-1
+      - name: Create Step Entity for First Deployment
+        id: step-1-create
         run: |
           step_id="step-1-deployment-1-${{ github.run_id }}"
-          response=$(curl -s -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
+          response=$(curl -s -L -X POST "https://api.getport.io/v1/blueprints/step/entities" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "identifier": "deployment-1-${{ github.run_id }}",
-            "title": "First Deployment for Workflow - ${{ fromJson(inputs.port_payload).workflow_id }}",
-            "blueprint": "deployment",
+            "identifier": "'${step_id}'",
+            "title": "Step 1 for Deployment 1",
+            "blueprint": "step",
             "properties": {
               "status": "IN_PROGRESS",
-              "status_message": "First deployment is in progress."
+              "status_message": "Step 1 is in progress."
             },
             "relations": {
-              "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
+              "deployment": "deployment-1-${{ github.run_id }}"
             }
           }')
           echo "STEP_ID=$step_id" >> $GITHUB_ENV
@@ -68,23 +68,23 @@ jobs:
             "message": "Step 1 for Deployment 1 completed successfully."
           }'
 
-      - name: Trigger Second Deployment
-        id: deploy-2
+      - name: Create Step Entity for Second Deployment
+        id: step-2-create
         run: |
           step_id="step-2-deployment-2-${{ github.run_id }}"
-          response=$(curl -s -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
+          response=$(curl -s -L -X POST "https://api.getport.io/v1/blueprints/step/entities" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "identifier": "deployment-2-${{ github.run_id }}",
-            "title": "Second Deployment for Workflow - ${{ fromJson(inputs.port_payload).workflow_id }}",
-            "blueprint": "deployment",
+            "identifier": "'${step_id}'",
+            "title": "Step 2 for Deployment 2",
+            "blueprint": "step",
             "properties": {
               "status": "IN_PROGRESS",
-              "status_message": "Second deployment is in progress."
+              "status_message": "Step 2 is in progress."
             },
             "relations": {
-              "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
+              "deployment": "deployment-2-${{ github.run_id }}"
             }
           }')
           echo "STEP_ID=$step_id" >> $GITHUB_ENV
