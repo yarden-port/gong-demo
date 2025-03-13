@@ -1,0 +1,140 @@
+name: SSA 2 - Workflow with Multiple Deployments, Steps, and Logs
+
+on:
+  workflow_dispatch:
+    inputs:
+      port_payload:
+        required: true
+        description: "Port's payload with details about the workflow entity."
+        type: string
+
+jobs:
+  create-deployments:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Generate Access Token
+        id: generate-token
+        run: |
+          access_token=$(curl --location --request POST 'https://api.getport.io/v1/auth/access_token' \
+          --header 'Content-Type: application/json' \
+          --data-raw '{
+              "clientId": "'${{ secrets.PORT_CLIENT_ID }}'",
+              "clientSecret": "'${{ secrets.PORT_CLIENT_SECRET }}'"
+          }' | jq -r '.accessToken')
+          echo "ACCESS_TOKEN=$access_token" >> $GITHUB_ENV
+
+      - name: Trigger First Deployment
+        id: deploy-1
+        run: |
+          response=$(curl -s -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "identifier": "deployment-1-${{ github.run_id }}",
+            "title": "First Deployment for Workflow - ${{ fromJson(inputs.port_payload).workflow_id }}",
+            "blueprint": "deployment",
+            "properties": {
+              "status": "IN_PROGRESS",
+              "status_message": "First deployment is in progress."
+            },
+            "relations": {
+              "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
+            }
+          }')
+          echo "Deployment 1 created"
+
+      - name: Trigger Log Stream Run for Deployment 1
+        id: run-deploy-1
+        run: |
+          response=$(curl -s -L -X POST "https://api.getport.io/v1/actions/step_log_stream/runs" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{ "properties": {}, "entity": "deployment-1-${{ github.run_id }}" }')
+          run_id=$(echo "$response" | jq -r '.run.id')
+          echo "RUN_ID_DEPLOY_1=$run_id" >> $GITHUB_ENV
+
+      - name: Log to Step Log Stream for Deployment 1
+        run: |
+          curl -L -X POST "https://api.getport.io/v1/actions/runs/${{ env.RUN_ID_DEPLOY_1 }}/logs" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "terminationStatus": "SUCCESS",
+            "statusLabel": "Completed",
+            "message": "Deployment 1 started successfully."
+          }'
+
+      - name: Trigger Second Deployment
+        id: deploy-2
+        run: |
+          response=$(curl -s -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "identifier": "deployment-2-${{ github.run_id }}",
+            "title": "Second Deployment for Workflow - ${{ fromJson(inputs.port_payload).workflow_id }}",
+            "blueprint": "deployment",
+            "properties": {
+              "status": "IN_PROGRESS",
+              "status_message": "Second deployment is in progress."
+            },
+            "relations": {
+              "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
+            }
+          }')
+          echo "Deployment 2 created"
+
+      - name: Trigger Log Stream Run for Deployment 2
+        id: run-deploy-2
+        run: |
+          response=$(curl -s -L -X POST "https://api.getport.io/v1/actions/step_log_stream/runs" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{ "properties": {}, "entity": "deployment-2-${{ github.run_id }}" }')
+          run_id=$(echo "$response" | jq -r '.run.id')
+          echo "RUN_ID_DEPLOY_2=$run_id" >> $GITHUB_ENV
+
+      - name: Log to Step Log Stream for Deployment 2
+        run: |
+          curl -L -X POST "https://api.getport.io/v1/actions/runs/${{ env.RUN_ID_DEPLOY_2 }}/logs" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "terminationStatus": "SUCCESS",
+            "statusLabel": "Completed",
+            "message": "Deployment 2 started successfully."
+          }'
+
+  update-workflow:
+    needs: create-deployments
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Generate Access Token
+        id: generate-token
+        run: |
+          access_token=$(curl --location --request POST 'https://api.getport.io/v1/auth/access_token' \
+          --header 'Content-Type: application/json' \
+          --data-raw '{
+              "clientId": "'${{ secrets.PORT_CLIENT_ID }}'",
+              "clientSecret": "'${{ secrets.PORT_CLIENT_SECRET }}'"
+          }' | jq -r '.accessToken')
+          echo "ACCESS_TOKEN=$access_token" >> $GITHUB_ENV
+
+      - name: Update Workflow as Completed
+        id: update-workflow
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/${{ fromJson(inputs.port_payload).workflow_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "COMPLETED",
+              "status_message": "Workflow completed successfully."
+            }
+          }'
