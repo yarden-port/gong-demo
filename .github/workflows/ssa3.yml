@@ -26,7 +26,26 @@ jobs:
           }' | jq -r '.accessToken')
           echo "ACCESS_TOKEN=$access_token" >> $GITHUB_ENV
 
-      - name: Create Step Entity for First Deployment
+      - name: Create Deployment 1
+        id: deploy-1
+        run: |
+          response=$(curl -s -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "identifier": "deployment-1-${{ github.run_id }}",
+            "title": "First Deployment for Workflow - ${{ fromJson(inputs.port_payload).workflow_id }}",
+            "blueprint": "deployment",
+            "properties": {
+              "status": "IN_PROGRESS",
+              "status_message": "Deployment 1 is in progress."
+            },
+            "relations": {
+              "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
+            }
+          }')
+
+      - name: Create Step for Deployment 1
         id: step-1-create
         run: |
           step_id="step-1-deployment-1-${{ github.run_id }}"
@@ -47,7 +66,7 @@ jobs:
           }')
           echo "STEP_ID=$step_id" >> $GITHUB_ENV
 
-      - name: Trigger Log Stream Run for Step 1
+      - name: Run SSA for Step 1
         id: run-step-1
         run: |
           response=$(curl -s -L -X POST "https://api.getport.io/v1/actions/step_log_stream/runs" \
@@ -57,7 +76,7 @@ jobs:
           run_id=$(echo "$response" | jq -r '.run.id')
           echo "RUN_ID_STEP_1=$run_id" >> $GITHUB_ENV
 
-      - name: Log to Step Log Stream for Step 1
+      - name: Log Step 1 Execution
         run: |
           curl -L -X POST "https://api.getport.io/v1/actions/runs/${{ env.RUN_ID_STEP_1 }}/logs" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
@@ -66,48 +85,6 @@ jobs:
             "terminationStatus": "SUCCESS",
             "statusLabel": "Completed",
             "message": "Step 1 for Deployment 1 completed successfully."
-          }'
-
-      - name: Create Step Entity for Second Deployment
-        id: step-2-create
-        run: |
-          step_id="step-2-deployment-2-${{ github.run_id }}"
-          response=$(curl -s -L -X POST "https://api.getport.io/v1/blueprints/step/entities" \
-          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "identifier": "'${step_id}'",
-            "title": "Step 2 for Deployment 2",
-            "blueprint": "step",
-            "properties": {
-              "status": "IN_PROGRESS",
-              "status_message": "Step 2 is in progress."
-            },
-            "relations": {
-              "deployment": "deployment-2-${{ github.run_id }}"
-            }
-          }')
-          echo "STEP_ID=$step_id" >> $GITHUB_ENV
-
-      - name: Trigger Log Stream Run for Step 2
-        id: run-step-2
-        run: |
-          response=$(curl -s -L -X POST "https://api.getport.io/v1/actions/step_log_stream/runs" \
-          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
-          -H "Content-Type: application/json" \
-          -d '{ "properties": {}, "entity": "${{ env.STEP_ID }}" }')
-          run_id=$(echo "$response" | jq -r '.run.id')
-          echo "RUN_ID_STEP_2=$run_id" >> $GITHUB_ENV
-
-      - name: Log to Step Log Stream for Step 2
-        run: |
-          curl -L -X POST "https://api.getport.io/v1/actions/runs/${{ env.RUN_ID_STEP_2 }}/logs" \
-          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "terminationStatus": "SUCCESS",
-            "statusLabel": "Completed",
-            "message": "Step 2 for Deployment 2 completed successfully."
           }'
 
   update-workflow:
