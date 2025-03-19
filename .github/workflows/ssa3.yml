@@ -48,12 +48,13 @@ jobs:
       - name: Run SSA to Create Step for Deployment 1
         id: run-step-1
         run: |
+          step_id="step-1-deployment-1-${{ github.run_id }}"
           response=$(curl -s -L -X POST "https://api.getport.io/v1/actions/step_log_stream/runs" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
             "properties": {
-              "step_identifier": "step-1-deployment-1-${{ github.run_id }}",
+              "step_identifier": "'${step_id}'",
               "step_title": "Step 1 for Deployment 1",
               "status": "IN_PROGRESS",
               "status_message": "IN_PROGRESS",
@@ -61,9 +62,18 @@ jobs:
             }
           }')
           run_id=$(echo "$response" | jq -r '.run.id')
+          echo "STEP_ID=$step_id" >> $GITHUB_ENV
           echo "RUN_ID_STEP_1=$run_id" >> $GITHUB_ENV
 
-  
+      - name: Wait for 5 Seconds
+        run: sleep 5
+
+      - name: Update Step Entity with Run ID
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/step/entities/${{ env.STEP_ID }}?run_id=${{ env.RUN_ID_STEP_1 }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{}'
 
       - name: Log Step Execution to SSA Run
         run: |
