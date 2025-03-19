@@ -45,74 +45,112 @@ jobs:
             }
           }')
 
-      - name: Run SSA to Create Step for Deployment 1
+      - name: Run SSA to Create Steps for Deployment 1
         id: run-step-1
         run: |
-          step_id="step-1-deployment-1-${{ github.run_id }}"
+          for i in {1..2}; do
+            step_id="step-${i}-deployment-1-${{ github.run_id }}"
+            response=$(curl -s -L -X POST "https://api.getport.io/v1/actions/step_log_stream/runs" \
+            -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "properties": {
+                "step_identifier": "'${step_id}'",
+                "step_title": "Step '${i}' for Deployment 1",
+                "status": "IN_PROGRESS",
+                "status_message": "IN_PROGRESS",
+                "deployment": "deployment-1-${{ github.run_id }}"
+              }
+            }')
+            run_id=$(echo "$response" | jq -r '.run.id')
+            echo "STEP_ID_${i}=$step_id" >> $GITHUB_ENV
+            echo "RUN_ID_STEP_${i}=$run_id" >> $GITHUB_ENV
+            sleep 10
+            curl -L -X PATCH "https://api.getport.io/v1/blueprints/step/entities/${step_id}?run_id=${run_id}" \
+            -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{}'
+            curl -L -X POST "https://api.getport.io/v1/actions/runs/${run_id}/logs" \
+            -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "terminationStatus": "SUCCESS",
+              "statusLabel": "Completed",
+              "message": "Step '${i}' for Deployment 1 completed successfully."
+            }'
+          done
+
+      - name: Create Deployment 2
+        id: deploy-2
+        run: |
+          response=$(curl -s -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "identifier": "deployment-2-${{ github.run_id }}",
+            "title": "Second Deployment for Workflow - ${{ fromJson(inputs.port_payload).workflow_id }}",
+            "blueprint": "deployment",
+            "properties": {
+              "status": "IN_PROGRESS",
+              "status_message": "Deployment 2 is in progress."
+            },
+            "relations": {
+              "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
+            }
+          }')
+
+      - name: Run SSA to Create Step for Deployment 2 (Failure Scenario)
+        id: run-step-2
+        run: |
+          step_id="step-1-deployment-2-${{ github.run_id }}"
           response=$(curl -s -L -X POST "https://api.getport.io/v1/actions/step_log_stream/runs" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
             "properties": {
               "step_identifier": "'${step_id}'",
-              "step_title": "Step 1 for Deployment 1",
+              "step_title": "Step 1 for Deployment 2",
               "status": "IN_PROGRESS",
               "status_message": "IN_PROGRESS",
-              "deployment": "deployment-1-${{ github.run_id }}"
+              "deployment": "deployment-2-${{ github.run_id }}"
             }
           }')
           run_id=$(echo "$response" | jq -r '.run.id')
           echo "STEP_ID=$step_id" >> $GITHUB_ENV
-          echo "RUN_ID_STEP_1=$run_id" >> $GITHUB_ENV
+          echo "RUN_ID_STEP_2=$run_id" >> $GITHUB_ENV
 
-      - name: Wait for 5 Seconds
-        run: sleep 5
+      - name: Wait for 10 Seconds
+        run: sleep 10
 
-      - name: Update Step Entity with Run ID
+      - name: Update Step Entity with Run ID and Fail
         run: |
-          curl -L -X PATCH "https://api.getport.io/v1/blueprints/step/entities/${{ env.STEP_ID }}?run_id=${{ env.RUN_ID_STEP_1 }}" \
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/step/entities/${{ env.STEP_ID }}?run_id=${{ env.RUN_ID_STEP_2 }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{}'
-
-      - name: Log Step Execution to SSA Run
-        run: |
-          curl -L -X POST "https://api.getport.io/v1/actions/runs/${{ env.RUN_ID_STEP_1 }}/logs" \
+          curl -L -X POST "https://api.getport.io/v1/actions/runs/${{ env.RUN_ID_STEP_2 }}/logs" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "terminationStatus": "SUCCESS",
-            "statusLabel": "Completed",
-            "message": "Step for Deployment 1 created successfully via SSA."
+            "terminationStatus": "FAILED",
+            "statusLabel": "Failed",
+            "message": "Step for Deployment 2 failed. Marking Deployment 2 and Workflow as failed."
           }'
-
-  update-workflow:
-    needs: create-deployments
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Generate Access Token
-        id: generate-token
-        run: |
-          access_token=$(curl --location --request POST 'https://api.getport.io/v1/auth/access_token' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{
-              "clientId": "'${{ secrets.PORT_CLIENT_ID }}'",
-              "clientSecret": "'${{ secrets.PORT_CLIENT_SECRET }}'"
-          }' | jq -r '.accessToken')
-          echo "ACCESS_TOKEN=$access_token" >> $GITHUB_ENV
-
-      - name: Update Workflow as Completed
-        id: update-workflow
-        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/deployment/entities/deployment-2-${{ github.run_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "FAILED",
+              "status_message": "Deployment 2 failed due to step failure."
+            }
+          }'
           curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/${{ fromJson(inputs.port_payload).workflow_id }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
             "properties": {
-              "status": "COMPLETED",
-              "status_message": "Workflow completed successfully."
+              "status": "FAILED",
+              "status_message": "Workflow failed due to Deployment 2 failure."
             }
           }'
