@@ -69,11 +69,21 @@ jobs:
             curl -L -X PATCH "https://api.getport.io/v1/blueprints/step/entities/${step_id}?run_id=${run_id}" \
             -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "{\"properties\": {\"status\": \"COMPLETED\", \"log_stream\": \"https://app.getport.io/organization/run?runId=${run_id}\", \"status_message\": \"Step '${i}' completed successfully.\"}}"
+            -d '{
+              "properties": {
+                "status": "COMPLETED",
+                "log_stream": "https://app.getport.io/organization/run?runId=${run_id}", 
+                "status_message": "Step '${i}' completed successfully."
+              }
+            }'
             curl -L -X POST "https://api.getport.io/v1/actions/runs/${run_id}/logs" \
             -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "{\"terminationStatus\": \"SUCCESS\", \"statusLabel\": \"Completed\", \"message\": \"Step '${i}' for Deployment 1 completed successfully.\"}"
+            -d '{
+              "terminationStatus": "SUCCESS",
+              "statusLabel": "Completed",
+              "message": "Step '${i}' for Deployment 1 completed successfully."
+            }'
           done
 
       - name: Update Deployment 1 as Completed
@@ -88,15 +98,55 @@ jobs:
             }
           }'
 
-      - name: Fix Log Stream for Deployment 2 Step Failure
+      - name: Create Deployment 2
+        id: deploy-2
         run: |
-          curl -L -X PATCH "https://api.getport.io/v1/blueprints/step/entities/${{ env.STEP_ID }}?run_id=${{ env.RUN_ID_STEP_2 }}" \
+          response=$(curl -s -L -X POST "https://api.getport.io/v1/blueprints/deployment/entities" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
-          -d "{\"properties\": {\"status\": \"FAILED\", \"log_stream\": \"https://app.getport.io/organization/run?runId=${{ env.RUN_ID_STEP_2 }}\", \"status_message\": \"Step failed due to an error.\"}}"
+          -d '{
+            "identifier": "deployment-2-${{ github.run_id }}",
+            "title": "Second Deployment for Workflow - ${{ fromJson(inputs.port_payload).workflow_id }}",
+            "blueprint": "deployment",
+            "properties": {
+              "status": "IN_PROGRESS",
+              "status_message": "Deployment 2 is in progress."
+            },
+            "relations": {
+              "workflow": "${{ fromJson(inputs.port_payload).workflow_id }}"
+            }
+          }')
 
-      - name: Update Deployment 2 as Failed
+      - name: Run SSA to Create Step for Deployment 2 (Failure Scenario)
+        id: run-step-2
         run: |
+          step_id="step-1-deployment-2-${{ github.run_id }}"
+          response=$(curl -s -L -X POST "https://api.getport.io/v1/actions/step_log_stream/runs" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "step_identifier": "'${step_id}'",
+              "step_title": "Step 1 for Deployment 2",
+              "status": "IN_PROGRESS",
+              "status_message": "IN_PROGRESS",
+              "deployment": "deployment-2-${{ github.run_id }}"
+            }
+          }')
+          run_id=$(echo "$response" | jq -r '.run.id')
+          echo "STEP_ID=$step_id" >> $GITHUB_ENV
+          echo "RUN_ID_STEP_2=$run_id" >> $GITHUB_ENV
+          sleep 30
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/step/entities/${step_id}?run_id=${run_id}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "FAILED",
+              "log_stream": "https://app.getport.io/organization/run?runId=${run_id}",
+              "status_message": "Step failed due to an error."
+            }
+          }'
           curl -L -X PATCH "https://api.getport.io/v1/blueprints/deployment/entities/deployment-2-${{ github.run_id }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
@@ -106,9 +156,6 @@ jobs:
               "status_message": "Deployment 2 failed due to step failure."
             }
           }'
-
-      - name: Update Workflow as Failed
-        run: |
           curl -L -X PATCH "https://api.getport.io/v1/blueprints/workflow/entities/${{ fromJson(inputs.port_payload).workflow_id }}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
