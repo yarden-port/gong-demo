@@ -52,11 +52,13 @@ jobs:
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{
-            "properties": {"step_identifier": "test",
-            "step_title": "test",
-            "status": "IN_PROGRESS",
-            "status_message": "IN_PROGRESS",
-            "deployment": "deployment-1-${{ github.run_id }}"}}'
+            "properties": {
+              "step_identifier": "step-1-deployment-1-${{ github.run_id }}",
+              "step_title": "Step 1 for Deployment 1",
+              "status": "IN_PROGRESS",
+              "status_message": "IN_PROGRESS",
+              "deployment": "deployment-1-${{ github.run_id }}"
+            }
           }')
           run_id=$(echo "$response" | jq -r '.run.id')
           echo "RUN_ID_STEP_1=$run_id" >> $GITHUB_ENV
