@@ -65,7 +65,7 @@ jobs:
             run_id=$(echo "$response" | jq -r '.run.id')
             echo "STEP_ID_${i}=$step_id" >> $GITHUB_ENV
             echo "RUN_ID_STEP_${i}=$run_id" >> $GITHUB_ENV
-            sleep 10
+            sleep 30
             curl -L -X PATCH "https://api.getport.io/v1/blueprints/step/entities/${step_id}?run_id=${run_id}" \
             -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
             -H "Content-Type: application/json" \
@@ -123,7 +123,7 @@ jobs:
           run_id=$(echo "$response" | jq -r '.run.id')
           echo "STEP_ID=$step_id" >> $GITHUB_ENV
           echo "RUN_ID_STEP_2=$run_id" >> $GITHUB_ENV
-          sleep 10
+          sleep 30
           curl -L -X PATCH "https://api.getport.io/v1/blueprints/step/entities/${step_id}?run_id=${run_id}" \
           -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
           -H "Content-Type: application/json" \
