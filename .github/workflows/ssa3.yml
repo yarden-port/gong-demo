@@ -1,4 +1,4 @@
-name: SSA 3 - Workflow with Multiple Deployments, Steps, and Logs
+name: SSA 2 - Workflow with Multiple Deployments, Steps, and Logs
 
 on:
   workflow_dispatch:
@@ -84,6 +84,18 @@ jobs:
               "message": "Step '${i}' for Deployment 1 completed successfully."
             }'
           done
+
+      - name: Update Deployment 1 as Completed
+        run: |
+          curl -L -X PATCH "https://api.getport.io/v1/blueprints/deployment/entities/deployment-1-${{ github.run_id }}" \
+          -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "properties": {
+              "status": "COMPLETED",
+              "status_message": "Deployment 1 completed successfully."
+            }
+          }'
 
       - name: Create Deployment 2
         id: deploy-2
